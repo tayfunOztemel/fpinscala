@@ -55,6 +55,18 @@ class ListSuite extends PropSuite:
   test("List.productViaFoldLeft")(genDoubleList): list =>
     assertEquals(List.productViaFoldLeft(list), listToScalaList(list).product)
 
+  test("List.sumViaFoldRight")(genIntList) { list =>
+    assertEquals(List.sumViaFoldRight(list), listToScalaList(list).sum)
+  }
+
+  test("List.productViaFoldRight")(genDoubleList) { list =>
+    assertEquals(List.productViaFoldRight(list), listToScalaList(list).product)
+  }
+
+  test("List.productViaFoldRight simple")(genDoubleList) { _ =>
+    assertEquals(List.productViaFoldRight(List(1.0, 2.0, 3.0)), 6.0)
+  }
+
   test("List.lengthViaFoldLeft")(genIntList): list =>
     assertEquals(List.lengthViaFoldLeft(list), listToScalaList(list).length)
 
@@ -122,6 +134,10 @@ class ListSuite extends PropSuite:
       val expectedSList = listToScalaList(list1).zip(listToScalaList(list2)).map(_ * _)
       assertEquals(List.zipWith(list1, list2, _ * _), scalaListToList(expectedSList))
    */
+  test("List.zipWith")(genIntList ** genIntList) { case list1 ** list2 =>
+    val expectedSList = listToScalaList(list1).zip(listToScalaList(list2)).map(_ * _)
+    assertEquals(List.zipWith(list1, list2, _ * _), scalaListToList(expectedSList))
+  }
 
   test("List.hasSubsequence")(genIntList ** genSmallNum):
     case list ** n =>
