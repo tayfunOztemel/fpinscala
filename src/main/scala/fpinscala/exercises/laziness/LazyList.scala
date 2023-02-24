@@ -145,7 +145,7 @@ enum LazyList[+A]:
     go(this)._2
 
   def scanRightViaFold[B](acc: B)(f: (A, =>B)=>B): LazyList[B] =
-    foldRight(init -> LazyList(init)) {(a, b0) =>
+    foldRight(acc -> LazyList(acc)) {(a, b0) =>
       lazy val b1 = b0
       val b2 = f(a, b1(0))
       (b2, cons(b2, b1(1)))
