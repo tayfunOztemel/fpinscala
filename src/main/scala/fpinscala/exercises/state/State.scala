@@ -137,6 +137,9 @@ object State:
   def sequence[S,A] (ss: List[State[S, A]]): State[S, List[A]] =
     ss.foldRight(unit(Nil: List[A])) ((a, acc) => a.map2(acc)(_ :: _))
 
+  def traverse[S, A, B](as: List[A])(f: A => State[S, B]): State[S, List[B]] =
+    as.foldRight(unit[S, List[B]](Nil))((a, acc) => f(a).map2(acc)(_ :: _))
+
   def get[S]: State[S,S] = s => (s, s)
 
   def set[S](s: S): State[S, Unit] = _ => ((), s)
@@ -163,29 +166,11 @@ case class Machine(locked: Boolean, candies: Int, coins: Int) {
 object Candy:
   def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
     for
-      _ <- State.sequence(inputs.map(i => State.modify[Machine](update(i, _))))
+      _ <- State.traverse(inputs)(i => State.modify(update(i)))
       s <- State.get
     yield (s.coins, s.candies)
 
-  def simulateMachineOld(inputs: List[Input]): State[Machine, (Int, Int)] =
-    inputs match
-      case ::(head, next) =>
-        val s1: State[Machine, (Int, Int)] = head match
-          case Input.Coin =>
-            State(m => {
-              val mm = m.insert()
-              ((mm.coins, mm.candies), mm)
-            })
-          case Input.Turn =>
-            State(m => {
-              val mm = m.turn()
-              ((mm.coins, mm.candies), mm)
-            })
-        val s2: State[Machine, (Int, Int)] = simulateMachine(next)
-        s1.flatMap(cc => s2)
-      case Nil => State(m => ((m.coins, m.candies), m))
-
-  def update(i: Input, s: Machine): Machine =
+  val update = (i: Input) => (s: Machine) =>
     (i, s) match
       case (Input.Coin, Machine(true, ca, co)) if ca > 0 => Machine(false, ca, co + 1)
       case (Input.Turn, Machine(false, ca, co)) if ca > 0 => Machine(true, ca - 1, co)
