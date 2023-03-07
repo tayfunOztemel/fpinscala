@@ -30,6 +30,9 @@ object RNG:
     val (r, nextRng) = rng.nextInt
     if r > Int.MinValue then (Math.abs(r), nextRng) else nonNegativeInt(nextRng)
 
+  def boolean: Rand[Boolean] =
+    map[Int, Boolean](RNG.int)(i => i % 2 == 0)
+
   def double(rng: RNG): (Double, RNG) =
     val (r, rng2) = nonNegativeInt(rng)
     (r / (Int.MaxValue.toDouble + 1), rng2)
@@ -56,7 +59,7 @@ object RNG:
     intsViaTailRecursion(count)(rng)
 
   private def intsViaSimpleRecursion(count: Int)(rng: RNG): (List[Int], RNG) =
-    if(count > 0) then
+    if count > 0 then
       val (i1, r1) = rng.nextInt
       val (ii, rr) = ints(count -1)(r1)
       (i1 :: ii, rr)
@@ -145,10 +148,11 @@ object State:
   def set[S](s: S): State[S, Unit] = _ => ((), s)
 
   def modify[S](f: S => S): State[S, Unit] =
-    for {
-      s <- get
-      _ <- set(f(s))
-    } yield ()
+    get.flatMap(s => set(f(s)))
+//    for {
+//      s <- get
+//      e <- set(f(s))
+//    } yield ()
 
 enum Input:
   case Coin, Turn
